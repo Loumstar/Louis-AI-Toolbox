@@ -1,0 +1,11 @@
+arcade
+torch
+torchvision
+numpy
+librosa
+black
+autopep8
+pyglet
+tqdm
+scipy
+typing_extensions
