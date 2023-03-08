@@ -4,4 +4,9 @@ __pycache__
 venv
 
 checkpoints
+
+# datasets
 data_speech_commands_v0.02
+NaturalImageNetTrain
+NaturalImageNetTest
+MNIST

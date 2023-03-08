@@ -59,7 +59,7 @@ if __name__ == "__main__":
     classes = 20
     epochs = 10
 
-    model = resnet.ResNet(resnet.ResNet34, 3, classes).to(device)
+    model = resnet.ResNet(resnet.ResNet18, 3, classes).to(device)
     model.train()
 
     model_parameters = sum(
@@ -81,7 +81,7 @@ if __name__ == "__main__":
 
     batches = len(train_dataset) // batch_size
 
-    def evaluate(loader: DataLoader):
+    def evaluate(loader: DataLoader) -> float:
         correct, total = 0, 0
         model.eval()
 
@@ -101,14 +101,15 @@ if __name__ == "__main__":
     for epoch in range(epochs):
         pbar = tqdm.tqdm(total=batches, desc=f"Epoch #{epoch+1}")
 
-        for t, (image, labels) in enumerate(train_loader):
+        for image, labels in train_loader:
             image = image.to(device)
-            labels = labels.to(device)
+            labels = labels.to(device, dtype=torch.long)
 
             optimiser.zero_grad()
-            output = model(image)
 
+            output = model(image)
             loss = criterion(output, labels)
+
             loss.backward()
             optimiser.step()
 
@@ -124,7 +125,6 @@ if __name__ == "__main__":
             )
 
         val_accuracy = evaluate(val_loader)
-        test_accuracy = evaluate(test_loader)
 
         filepath = os.path.join(path, "checkpoints", f"epoch_{epoch}.pt")
         torch.save(model.state_dict(), filepath)

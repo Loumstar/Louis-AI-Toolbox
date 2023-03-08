@@ -58,8 +58,8 @@ class ResNetBlock(nn.Module):
     def __init__(
         self,
         in_channels: int,
-        channels: Tuple[int],
-        kernels: Tuple[int],
+        channels: Tuple[int, ...],
+        kernels: Tuple[int, ...],
         stride: int = 1,
     ) -> None:
         super().__init__()
@@ -86,8 +86,8 @@ class ResNetBlock(nn.Module):
                 ]
             )
 
-            if i < len(channels):
-                layers.append(nn.ReLU(inplace=True))
+            if i < len(channels) - 1:
+                layers.append(nn.ReLU())
 
         self.layers = nn.Sequential(*layers)
 
@@ -96,9 +96,9 @@ class ResNetBlock(nn.Module):
                 nn.Conv2d(
                     in_channels,
                     channels[-1],
-                    kernel_size=kernels[0],
+                    kernel_size=1,
                     stride=stride,
-                    padding=1,
+                    padding=0,
                     bias=False,
                 ),
                 nn.BatchNorm2d(channels[-1]),
@@ -127,9 +127,9 @@ class ResNet(nn.Module):
         conv_5_out = preset.conv_5[0][-1]
 
         conv1 = nn.Sequential(
-            nn.Conv2d(in_channels, 64, kernel_size=7, stride=2, padding=1),
+            nn.Conv2d(in_channels, 64, kernel_size=7, stride=2, padding=3),
             nn.BatchNorm2d(64),
-            nn.ReLU(inplace=True),
+            nn.ReLU(),
         )
 
         conv_2 = self.stage(2, preset.blocks[0], conv_2_in, *preset.conv_2)
@@ -140,10 +140,7 @@ class ResNet(nn.Module):
         self.stages = nn.Sequential(conv1, conv_2, conv_3, conv_4, conv_5)
         self.pool = nn.AvgPool2d(7)
 
-        self.fc = nn.Sequential(
-            nn.Linear(conv_5_out, out_channels, bias=True),
-            nn.Softmax(),
-        )
+        self.fc = nn.Linear(conv_5_out, out_channels, bias=True)
 
     def stage(
         self,
@@ -156,11 +153,11 @@ class ResNet(nn.Module):
         layers = []
 
         if stage == 2:
-            layers.append(nn.MaxPool2d(3, stride=2))
+            layers.append(nn.MaxPool2d(3, padding=1, stride=1))
 
         for i in range(blocks):
-            layer_in_channels = channels[-1] if i > 0 else in_channels
-            stride = 2 if (i == 0 and stage != 2) else 1
+            layer_in_channels = channels[i - 1] if i > 0 else in_channels
+            stride = 2 if i == 0 else 1
 
             layers.append(
                 ResNetBlock(layer_in_channels, channels, kernels, stride)
