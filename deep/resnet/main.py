@@ -8,7 +8,8 @@ if __name__ == "__main__":
     from torchvision import transforms
     from torchvision.datasets import ImageFolder
 
-    from . import resnet
+    from .presets import ResNet18
+    from .resnet import ResNet
 
     path = "residual/"
 
@@ -59,7 +60,7 @@ if __name__ == "__main__":
     classes = 20
     epochs = 10
 
-    model = resnet.ResNet(resnet.ResNet18, 3, classes).to(device)
+    model = ResNet(ResNet18, 3, classes).to(device)
     model.train()
 
     model_parameters = sum(

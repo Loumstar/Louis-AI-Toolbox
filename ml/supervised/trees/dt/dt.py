@@ -71,7 +71,7 @@ NodeType = Union[Node, Leaf]
 NodeDictType = Union[NodeDict, LeafDict]
 
 
-class Tree:
+class DecisionTree:
     def __init__(self, algorithm: Literal["entropy", "gini"]) -> None:
         self.__root: Optional[NodeType] = None
         self.algorithm = (

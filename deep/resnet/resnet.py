@@ -13,47 +13,6 @@ class ResNetPreset(NamedTuple):
     conv_5: Tuple[Tuple[int, ...], Tuple[int, ...]]
 
 
-ResNet18 = ResNetPreset(
-    blocks=(2, 2, 2, 2),
-    conv_2=((64, 64), (3, 3)),
-    conv_3=((128, 128), (3, 3)),
-    conv_4=((256, 256), (3, 3)),
-    conv_5=((512, 512), (3, 3)),
-)
-
-ResNet34 = ResNetPreset(
-    blocks=(3, 4, 6, 3),
-    conv_2=((64, 64), (3, 3)),
-    conv_3=((128, 128), (3, 3)),
-    conv_4=((256, 256), (3, 3)),
-    conv_5=((512, 512), (3, 3)),
-)
-
-ResNet52 = ResNetPreset(
-    blocks=(3, 4, 6, 3),
-    conv_2=((64, 64, 256), (1, 3, 1)),
-    conv_3=((128, 128, 512), (1, 3, 1)),
-    conv_4=((256, 256, 1024), (1, 3, 1)),
-    conv_5=((512, 512, 2048), (1, 3, 1)),
-)
-
-ResNet101 = ResNetPreset(
-    blocks=(3, 4, 23, 3),
-    conv_2=((64, 64, 256), (1, 3, 1)),
-    conv_3=((128, 128, 512), (1, 3, 1)),
-    conv_4=((256, 256, 1024), (1, 3, 1)),
-    conv_5=((512, 512, 2048), (1, 3, 1)),
-)
-
-ResNet152 = ResNetPreset(
-    blocks=(3, 8, 36, 3),
-    conv_2=((64, 64, 256), (1, 3, 1)),
-    conv_3=((128, 128, 512), (1, 3, 1)),
-    conv_4=((256, 256, 1024), (1, 3, 1)),
-    conv_5=((512, 512, 2048), (1, 3, 1)),
-)
-
-
 class ResNetBlock(nn.Module):
     def __init__(
         self,

@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-from ....residual.resnet import ResNetBlock
+from ....resnet import ResNetBlock
 
 
 class VAEEncoder(nn.Module):
