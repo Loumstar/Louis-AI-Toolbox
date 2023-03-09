@@ -1,104 +1,111 @@
-if __name__ == "__main__":
-    import os.path
+import inspect
+import os.path
+from typing import Tuple
 
-    import torch
-    import torch.nn as nn
-    import tqdm
-    from torch.autograd import Variable
-    from torch.utils.data import DataLoader
+import torch
+import torch.nn as nn
+import tqdm
+from torch.autograd import Variable
+from torch.utils.data import DataLoader
 
-    from . import cells
-    from .dataset import SpeechCommandsDataset
-    from .rnn import UniDirectionalRNN
+from . import cells
+from .loader import SpeechCommandsDataset
+from .rnn import BiDirectionalRNN
 
-    path = "recurrent/"
+module = inspect.currentframe()
+assert module is not None, "Module is None"
 
-    train_dataset = SpeechCommandsDataset(path, "train")
-    val_dataset = SpeechCommandsDataset(path, "val")
-    test_dataset = SpeechCommandsDataset(path, "test")
+module_filepath = inspect.getabsfile(module)
+directory = os.path.dirname(module_filepath)
 
-    batch_size = 100
-    epochs = 5
+train_dataset = SpeechCommandsDataset("datasets", "train")
+val_dataset = SpeechCommandsDataset("datasets", "val")
+test_dataset = SpeechCommandsDataset("datasets", "test")
 
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+batch_size = 100
+epochs = 5
 
-    train_loader = DataLoader(
-        train_dataset, batch_size, shuffle=True, drop_last=True
-    )
+device = "cuda" if torch.cuda.is_available() else "cpu"
 
-    val_loader = DataLoader(val_dataset, batch_size, shuffle=False)
-    test_loader = DataLoader(test_dataset, batch_size, shuffle=False)
+train_loader = DataLoader(
+    train_dataset, batch_size, shuffle=True, drop_last=True
+)
 
-    sequence_size, in_size = train_dataset[0][0].shape
-    out_size = 3
-    hidden_size = 32
-    num_layers = 3
-    bias = True
+val_loader = DataLoader(val_dataset, batch_size, shuffle=False)
+test_loader = DataLoader(test_dataset, batch_size, shuffle=False)
 
-    model = UniDirectionalRNN(
-        cells.VanillaCell, in_size, out_size, hidden_size, num_layers, bias
-    ).to(device)
+sequence_size, in_size = train_dataset[0][0].shape
+out_size = 3
+hidden_size = 32
+num_layers = 3
+bias = True
 
-    model.train()
+model = BiDirectionalRNN(
+    cells.GRUCell, in_size, out_size, hidden_size, num_layers, bias
+).to(device)
 
-    criterion = nn.CrossEntropyLoss()
-    optimiser = torch.optim.Adam(model.parameters(), lr=0.01)
+model.train()
 
-    losses = []
+criterion = nn.CrossEntropyLoss()
+optimiser = torch.optim.Adam(model.parameters(), lr=0.01)
 
-    val_accuracy = None
-    test_accuracy = None
+train_losses = []
 
-    batches = len(train_dataset) // batch_size
+val_accuracies = []
+test_accuracies = []
 
-    def evaluate(loader: DataLoader):
-        correct, total = 0, 0
-        model.eval()
 
-        with torch.no_grad():
-            for audio, labels in loader:
-                audio = Variable(audio.view(-1, sequence_size, in_size)).to(
-                    device
-                )
-                output = model(audio)
+def evaluate(
+    loader: DataLoader, desc: str = "Evaluate"
+) -> Tuple[float, float]:
+    correct, total, loss, batches = 0, 0, 0, 0
+    model.eval()
 
-                _, predicted = torch.max(output.data, 1)
-                correct += (predicted.cpu() == labels.cpu()).sum().item()
-                total += labels.size(0)
+    pbar = tqdm.tqdm(loader, desc=desc, unit="batch")
 
-        model.train()
-
-        return 100 * correct // total
-
-    for epoch in range(epochs):
-        pbar = tqdm.tqdm(total=batches, desc=f"Epoch #{epoch+1}")
-
-        for i, (audio, labels) in enumerate(train_loader):
+    with torch.no_grad():
+        for audio, labels in pbar:
             audio = Variable(audio.view(-1, sequence_size, in_size)).to(device)
-            labels = Variable(labels).to(device)
-
-            optimiser.zero_grad()
             output = model(audio)
 
-            loss = criterion(output, labels)
-            loss.backward()
-            optimiser.step()
+            _, predicted = torch.max(output.data, 1)
 
-            losses.append(loss.item())
+            loss += criterion(output, labels).item()
+            correct += (predicted.cpu() == labels.cpu()).sum().item()
 
-            pbar.update(1)
-            pbar.set_postfix(
-                {
-                    "loss": loss.item(),
-                    "val": val_accuracy,
-                    "test": test_accuracy,
-                }
-            )
+            total += labels.size(0)
+            batches += 1
 
-        val_accuracy = evaluate(val_loader)
-        test_accuracy = evaluate(test_loader)
+            pbar.set_postfix({"acc": correct / total, "loss": loss / batches})
 
-        filepath = os.path.join(path, "checkpoints", f"epoch_{epoch}.pt")
-        torch.save(model.state_dict(), filepath)
+    return correct / total, loss / batches
 
-    print("Done!")
+
+for epoch in range(epochs):
+    model.train()
+
+    pbar = tqdm.tqdm(train_loader, desc=f"Epoch #{epoch+1}", unit="batch")
+
+    for audio, labels in pbar:
+        audio = Variable(audio.view(-1, sequence_size, in_size)).to(device)
+        labels = Variable(labels).to(device)
+
+        optimiser.zero_grad()
+        output = model(audio)
+
+        loss = criterion(output, labels)
+        loss.backward()
+        optimiser.step()
+
+        train_losses.append(loss.item())
+
+        pbar.set_postfix({"loss": loss.item()})
+
+    val_accuracy = evaluate(val_loader, desc="Evaluate")
+    test_accuracy = evaluate(test_loader, desc="Test")
+
+    val_accuracies.append(val_accuracy)
+    test_accuracies.append(test_accuracy)
+
+    filepath = os.path.join(directory, "checkpoints", f"epoch_{epoch}.pt")
+    torch.save(model.state_dict(), filepath)

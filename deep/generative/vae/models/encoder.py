@@ -39,13 +39,11 @@ class VAEEncoder(nn.Module):
         out = self.layers(x).view(x.size(0), -1)
         mean, logvar = self.mu(out), self.sigma(out)
 
-        embedding = (
+        self.__mean = mean
+        self.__logvar = logvar
+
+        return (
             mean + torch.rand_like(mean).mul(torch.exp(logvar / 2))
             if self.training
             else mean
         )
-
-        self.__mean = mean
-        self.__logvar = logvar
-
-        return embedding

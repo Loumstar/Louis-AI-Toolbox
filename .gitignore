@@ -6,7 +6,9 @@ venv
 checkpoints
 
 # datasets
+datasets
 data_speech_commands_v0.02
 NaturalImageNetTrain
 NaturalImageNetTest
 MNIST
+cifar-10*
