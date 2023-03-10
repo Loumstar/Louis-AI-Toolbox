@@ -46,6 +46,13 @@ model = BiDirectionalRNN(
 
 model.train()
 
+model_parameters = sum(
+    p.numel() for p in model.parameters() if p.requires_grad
+)
+
+print(model)
+print(f"Model has {model_parameters:,} parameters.")
+
 criterion = nn.CrossEntropyLoss()
 optimiser = torch.optim.Adam(model.parameters(), lr=0.01)
 

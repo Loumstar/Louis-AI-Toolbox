@@ -1,3 +1,4 @@
+import inspect
 import os
 from typing import Tuple
 
@@ -10,7 +11,12 @@ from torchvision import datasets, transforms
 
 from .models import Discriminator, Generator
 
-path = "deep/generative/gan"
+module = inspect.currentframe()
+assert module is not None, "Module is None"
+
+module_filepath = inspect.getabsfile(module)
+directory = os.path.dirname(module_filepath)
+
 epochs = 20
 beta = 0.5
 lr = 2e-4
@@ -30,12 +36,8 @@ transform = transforms.Compose(
     ]
 )
 
-train_dataset = datasets.CIFAR10(
-    path, train=True, download=True, transform=transform
-)
-test_dataset = datasets.CIFAR10(
-    path, train=False, download=True, transform=transform
-)
+train_dataset = datasets.CIFAR10("datasets", train=True, transform=transform)
+test_dataset = datasets.CIFAR10("datasets", train=False, transform=transform)
 
 train_loader = DataLoader(
     train_dataset, batch_size, shuffle=True, drop_last=True
@@ -176,17 +178,21 @@ for epoch in range(epochs):
     val_disc_losses.append(val_disc_loss)
     val_gen_losses.append(val_gen_loss)
 
-    gen_filepath = os.path.join(path, "checkpoints", f"generator_{epoch}.pt")
+    gen_filepath = os.path.join(
+        directory, "checkpoints", f"generator_{epoch}.pt"
+    )
     torch.save(generator.state_dict(), gen_filepath)
 
     disc_filepath = os.path.join(
-        path, "checkpoints", f"discriminator_{epoch}.pt"
+        directory, "checkpoints", f"discriminator_{epoch}.pt"
     )
 
     torch.save(discriminator.state_dict(), disc_filepath)
 
-gen_loss_filepath = os.path.join(path, "checkpoints", "generator_loss")
+gen_loss_filepath = os.path.join(directory, "checkpoints", "generator_loss")
 np.save(gen_loss_filepath, np.array(train_gen_losses))
 
-disc_loss_filepath = os.path.join(path, "checkpoints", "discriminator_loss")
+disc_loss_filepath = os.path.join(
+    directory, "checkpoints", "discriminator_loss"
+)
 np.save(disc_loss_filepath, np.array(train_disc_losses))

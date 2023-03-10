@@ -9,10 +9,10 @@ class Discriminator(nn.Module):
         super().__init__()
 
         self.layers = nn.Sequential(
-            ResNetBlock(in_channels, (64, 64), (3, 3), 2),  # 16 x 16 x 64
-            ResNetBlock(64, (128, 128), (3, 3), 2),  # 8 x 8 x 128
-            ResNetBlock(128, (256, 256), (3, 3), 2),  # 4 x 4 x 256
-            ResNetBlock(256, (512, 512), (3, 3), 2),  # 2 x 2 x 512,
+            ResNetBlock(in_channels, (64,), (3,), 2),  # 16 x 16 x 64
+            ResNetBlock(64, (128,), (3,), 2),  # 8 x 8 x 128
+            ResNetBlock(128, (256,), (3,), 2),  # 4 x 4 x 256
+            ResNetBlock(256, (512,), (3,), 2),  # 2 x 2 x 512,
             nn.AvgPool2d(kernel_size=2),  # 1 x 1 x 512
         )
 

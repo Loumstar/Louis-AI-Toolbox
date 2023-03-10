@@ -1,10 +1,13 @@
 from __future__ import annotations
 
-from typing import List, Literal, Optional, Tuple, TypedDict, Union
+from typing import List, Literal, Optional, Tuple, TypedDict, TypeVar, Union
 
 import numpy as np
+import numpy.typing as npt
 
 from . import evaluate as dte
+
+T = TypeVar("T", bound=Union[np.float64, np.int8])
 
 
 class NodeDict(TypedDict):
@@ -34,7 +37,7 @@ class Leaf:
         self.count = count
         self.parent = parent
 
-    def __call__(self, x: np.ndarray) -> str:
+    def __call__(self, x: npt.NDArray[np.float64]) -> str:
         return self.label
 
 
@@ -60,7 +63,7 @@ class Node:
     def __repr__(self) -> str:
         return f"Node({self.column}, {self.value})"
 
-    def __call__(self, x: np.ndarray) -> str:
+    def __call__(self, x: npt.NDArray[np.float64]) -> str:
         if x[self.column] < self.value:
             return self.left(x)
         else:
@@ -134,16 +137,16 @@ class DecisionTree:
 
         return self.__dict(self.__root)
 
-    def predict(self, x: np.ndarray) -> np.ndarray:
+    def predict(self, x: npt.NDArray[np.float64]) -> npt.NDArray[np.str0]:
         return np.array([self.predict_one(a) for a in x])
 
-    def predict_one(self, x: np.ndarray) -> str:
+    def predict_one(self, x: npt.NDArray[np.float64]) -> str:
         return self.root(x)
 
     def __fit(
         self,
-        x: np.ndarray,
-        y: np.ndarray,
+        x: npt.NDArray[np.float64],
+        y: npt.NDArray[np.int8],
         depth: int = 0,
         parent: Optional[Node] = None,
     ) -> NodeType:
@@ -181,18 +184,24 @@ class DecisionTree:
 
         return node
 
-    def fit(self, x: np.ndarray, y: np.ndarray) -> None:
+    def fit(self, x: npt.NDArray[np.float64], y: npt.NDArray[np.int8]) -> None:
         self.__root = self.__fit(x, y)
 
     def split_dataset(
-        self, x: np.ndarray, data: np.ndarray, column: int, value: float
-    ) -> Tuple[np.ndarray, np.ndarray]:
+        self,
+        x: npt.NDArray[np.float64],
+        data: npt.NDArray[T],
+        column: int,
+        value: float,
+    ) -> Tuple[npt.NDArray[T], npt.NDArray[T]]:
         left = data[x[:, column] < value]
         right = data[x[:, column] >= value]
 
         return left, right
 
-    def best_split(self, x: np.ndarray, y: np.ndarray) -> Tuple[int, float]:
+    def best_split(
+        self, x: npt.NDArray[np.float64], y: npt.NDArray[np.int8]
+    ) -> Tuple[int, float]:
         best_split = None
         max_gain = 0
 
@@ -213,20 +222,23 @@ class DecisionTree:
         return best_split
 
     def information_gain(
-        self, y: np.ndarray, left_split: np.ndarray, right_split: np.ndarray
+        self,
+        y: npt.NDArray[np.int8],
+        left_split: npt.NDArray[np.int8],
+        right_split: npt.NDArray[np.int8],
     ) -> float:
         left = self.algorithm(left_split) * len(left_split) / len(y)
         right = self.algorithm(right_split) * len(right_split) / len(y)
 
         return self.algorithm(y) - (left + right)
 
-    def negative_gini(self, y: np.ndarray) -> float:
+    def negative_gini(self, y: npt.NDArray[np.int8]) -> float:
         _, label_counts = np.unique(y, return_counts=True)
         p = label_counts / len(y)
 
         return -sum(p * (1 - p))
 
-    def entropy(self, y: np.ndarray) -> float:
+    def entropy(self, y: npt.NDArray[np.int8]) -> float:
         _, label_counts = np.unique(y, return_counts=True)
         p = label_counts / len(y)
 
@@ -257,7 +269,9 @@ class DecisionTree:
 
         return node.right.label, node.right.count
 
-    def prune(self, x: np.ndarray, y: np.ndarray) -> None:
+    def prune(
+        self, x: npt.NDArray[np.float64], y: npt.NDArray[np.int8]
+    ) -> None:
         tree_items = self.__tree_items(self.root)
         tree_items.sort(key=lambda x: x.depth, reverse=True)
 
