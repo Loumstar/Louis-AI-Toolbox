@@ -67,11 +67,9 @@ class MaxPool(Conv2d):
         if self.__mask is None:
             raise RuntimeError("No forward pass calculated")
 
-        # n x c x h_out x w_out
-        grad_x = self.upsample(np.zeros_like(dz))
-        mask = self.__mask == self.__x
-
-        grad_x[mask] = dz
+        # n x c x h_out x w_out x K
+        grad_x = np.zeros_like(self.__mask)
+        grad_x[self.__mask] = dz
 
         return grad_x
 

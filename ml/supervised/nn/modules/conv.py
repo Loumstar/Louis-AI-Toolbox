@@ -37,13 +37,14 @@ class Conv2d(Module):
 
         self.__x: Optional[Tensor] = None
         self.__grad: Optional[Tuple[Tensor, Tensor]] = None
+        self.__image_size: Optional[Tuple[int, ...]] = None
 
     def __pad(self, x: Tensor) -> Tensor:
         padding = tuple((p,) for p in (0, 0, *self.padding))
         return np.pad(x, padding, "constant", constant_values=0)
 
     def unfold(self, x: Tensor) -> Tensor:
-        stride_height, stride_width = self.stride
+        sh, sw = self.stride
 
         # n x c_in x h_in x w_in
         # -> n x c_in x (h_in + 2p) x (w_in + 2p)
@@ -51,18 +52,30 @@ class Conv2d(Module):
         # -> n x c_in x h_out x w_out x k x k
         return sliding_window_view(
             self.__pad(x), self.kernel_size, axis=(2, 3)  # type: ignore
-        )[:, :, ::stride_height, ::stride_width]
+        )[:, :, ::sh, ::sw]
 
     def upsample(self, x: Tensor) -> Tensor:
-        stride_height, stride_width = self.stride
-        x = x.repeat(stride_height, axis=2).repeat(stride_width, axis=3)
+        if self.__image_size is None:
+            raise RuntimeError("No image size known for upsampling.")
 
-        return self.__pad(x)
+        kh, kw = self.kernel_size
+        sh, sw = self.stride
+        ph, pw = self.padding
+
+        bh, bw = (kh // 2) - ph, (kw // 2) - pw
+
+        _, _, h, w = self.__image_size
+        out = np.zeros(self.__image_size)
+
+        out[:, :, bh : h - bh : sh, bw : w - bw : sw] = x
+
+        return out
 
     def forward(self, x: Tensor) -> Tensor:
         # n x c_in x h_in x w_in
         # -> n x c_in x h_out x w_out x k x k
         # -> n x h_out x w_out x c_in x k x k
+        self.__image_size = x.shape
         x = self.unfold(x).transpose(0, 2, 3, 1, 4, 5)
 
         # n x h_out x w_out x c_in x K
@@ -165,8 +178,8 @@ class Conv2d(Module):
 
 
 if __name__ == "__main__":
-    conv = Conv2d(1, 1, 3, 1, 0)
-    conv.W = np.array([[[[0, 1, 0], [0, 0, 0], [0, 0, 0]]]])
+    conv = Conv2d(1, 1, 3, 2, 0)
+    conv.W = np.array([[[[1, 0, 0], [0, 1, 0], [0, 0, 1]]]])
 
     image = np.array(
         [
@@ -185,7 +198,8 @@ if __name__ == "__main__":
     out = conv(image)
     print(out)
 
-    back = conv.backward(np.array([[[[0, 1, 0], [0, 0, 0], [0, 0, 0]]]]))
-    # back = conv.backward(np.array([[[[0, 1], [0, 0]]]]))
+    # back = conv.backward(np.array([[[[0, 1, 0], [0, 0, 0], [0, 0, 0]]]]))
+    back = conv.backward(np.array([[[[1, 1], [1, 1]]]]))
 
     print(back.shape)
+    print(back)
