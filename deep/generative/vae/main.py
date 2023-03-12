@@ -1,6 +1,7 @@
 import inspect
 import os.path
 
+import numpy as np
 import torch
 import torch.nn.functional as F
 import tqdm
@@ -129,3 +130,9 @@ for epoch in range(epochs):
 
     filepath = os.path.join(directory, "checkpoints", f"epoch_{epoch}.pt")
     torch.save(model.state_dict(), filepath)
+
+train_losses_filepath = os.path.join(directory, "checkpoints", "train_losses")
+np.save(train_losses_filepath, np.array(train_losses))
+
+test_losses_filepath = os.path.join(directory, "checkpoints", "test_losses")
+np.save(test_losses_filepath, np.array(test_losses))
