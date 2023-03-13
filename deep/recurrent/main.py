@@ -5,7 +5,6 @@ from typing import Tuple
 import torch
 import torch.nn as nn
 import tqdm
-from torch.autograd import Variable
 from torch.utils.data import DataLoader
 
 from . import cells
@@ -72,7 +71,7 @@ def evaluate(
 
     with torch.no_grad():
         for audio, labels in pbar:
-            audio = Variable(audio.view(-1, sequence_size, in_size)).to(device)
+            audio = audio.to(device)
             output = model(audio)
 
             _, predicted = torch.max(output.data, 1)
@@ -94,8 +93,8 @@ for epoch in range(epochs):
     pbar = tqdm.tqdm(train_loader, desc=f"Epoch #{epoch+1}", unit="batch")
 
     for audio, labels in pbar:
-        audio = Variable(audio.view(-1, sequence_size, in_size)).to(device)
-        labels = Variable(labels).to(device)
+        audio = audio.to(device)
+        labels = labels.to(device)
 
         optimiser.zero_grad()
         output = model(audio)
