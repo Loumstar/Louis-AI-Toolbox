@@ -1,26 +1,19 @@
-from typing import Tuple
-
 import torch
 import torch.nn as nn
 
-from ...resnet import ResNetBlock
 
-
-class ResidualNorm(ResNetBlock):
+class ResidualNorm(nn.Module):
     def __init__(
         self,
-        in_channels: int,
-        channels: Tuple[int, ...],
-        kernels: Tuple[int, ...],
-        stride: int = 1,
+        dimensions: int,
         dropout: float = 0.3,
     ) -> None:
-        super().__init__(in_channels, channels, kernels, stride)
+        super().__init__()
 
-        self.norm = nn.LayerNorm(channels[-1])
+        self.norm = nn.LayerNorm(dimensions)
         self.dropout = nn.Dropout(dropout)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        out = self.norm(super().forward(x))
+    def forward(self, x: torch.Tensor, residual: torch.Tensor) -> torch.Tensor:
+        out = self.norm(x + residual)
 
         return self.dropout(out)

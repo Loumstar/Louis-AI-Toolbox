@@ -6,7 +6,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
-class Attention(nn.Module):
+class DotAttention(nn.Module):
     def __init__(
         self, heads: int, dimensions: int, dropout: float = 0.3
     ) -> None:
