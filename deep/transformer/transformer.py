@@ -68,12 +68,28 @@ class Transformer(nn.Module):
                 nn.init.xavier_uniform_(p)
 
     def source_mask(self, source: torch.Tensor) -> torch.Tensor:
-        ...
+        return (source != self.source_pad_token_index).unsqueeze(-2)
 
     def target_mask(self, target: torch.Tensor) -> torch.Tensor:
-        ...
+        target_mask = (target != self.target_pad_token_index).unsqueeze(-2)
+        future_token_mask = (
+            torch.ones((1, target.size(1), target.size(1)))
+            .triu(1)
+            .logical_not()
+            .to(self.device)
+        )
+
+        return target_mask & future_token_mask
 
     def forward(
         self, source: torch.Tensor, target: torch.Tensor
     ) -> torch.Tensor:
-        ...
+        source_mask = self.source_mask(source)
+        target_mask = self.target_mask(target)
+
+        encoder_out = self.encoder(source, mask=source_mask)
+        decoder_out = self.decoder(
+            target, encoder_out, source_mask, target_mask
+        )
+
+        return self.fc(decoder_out)

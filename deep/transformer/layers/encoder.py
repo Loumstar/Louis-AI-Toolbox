@@ -53,15 +53,22 @@ class TransformerEncoder(nn.Module):
         self.embed = embedder
         self.position = PositionalEncoder(dimensions, max_length, dropout)
 
-        encoder_layers = [
-            EncoderLayer(dimensions, heads, feed_forward_hidden_size, dropout)
-            for _ in range(layers)
-        ]
+        self.layers = nn.ModuleList(
+            [
+                EncoderLayer(
+                    dimensions, heads, feed_forward_hidden_size, dropout
+                )
+                for _ in range(layers)
+            ]
+        )
 
-        self.layers = nn.Sequential(*encoder_layers)
+    def forward(
+        self, x: torch.Tensor, mask: Optional[torch.Tensor] = None
+    ) -> torch.Tensor:
+        embedding = self.embed(x)
+        encoding = self.position(embedding)
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        embeddings = self.embed(x)
-        encodings = self.position(embeddings)
+        for layer in self.layers:
+            encoding = layer(encoding, mask)
 
-        return self.layers(encodings)
+        return encoding
