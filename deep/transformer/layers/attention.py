@@ -8,10 +8,10 @@ import torch.nn.functional as F
 
 class DotAttention(nn.Module):
     def __init__(
-        self, heads: int, dimensions: int, dropout: float = 0.3
+        self, dimensions: int, heads: int, dropout: float = 0.3
     ) -> None:
-        self.heads = heads
         self.dimensions = dimensions
+        self.heads = heads
 
         self.head_dimensions = dimensions // heads
 

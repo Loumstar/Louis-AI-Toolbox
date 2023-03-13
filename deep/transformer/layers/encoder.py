@@ -19,7 +19,7 @@ class EncoderLayer(nn.Module):
     ) -> None:
         super().__init__()
 
-        self.attention = DotAttention(heads, dimensions, dropout)
+        self.attention = DotAttention(dimensions, heads, dropout)
 
         self.norm_1 = ResidualNorm(dimensions, dropout)
         self.norm_2 = ResidualNorm(dimensions, dropout)
@@ -37,14 +37,14 @@ class EncoderLayer(nn.Module):
         return self.norm_2(out, normalised)
 
 
-class Encoder(nn.Module):
+class TransformerEncoder(nn.Module):
     def __init__(
         self,
         embedder: nn.Module,
         dimensions: int,
-        feed_forward_hidden_size: int,
         heads: int,
         layers: int,
+        feed_forward_hidden_size: int,
         max_length: int = 200,
         dropout: float = 0.3,
     ) -> None:
