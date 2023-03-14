@@ -7,9 +7,8 @@ import torch.nn as nn
 import tqdm
 from torch.utils.data import DataLoader
 
-from . import cells
+from . import cells, rnn
 from .loader import SpeechCommandsDataset
-from .rnn import BiDirectionalRNN
 
 module = inspect.currentframe()
 assert module is not None, "Module is None"
@@ -39,7 +38,7 @@ hidden_size = 32
 num_layers = 3
 bias = True
 
-model = BiDirectionalRNN(
+model = rnn.BiDirectionalRNN(
     cells.GRUCell, in_size, out_size, hidden_size, num_layers, bias
 ).to(device)
 
