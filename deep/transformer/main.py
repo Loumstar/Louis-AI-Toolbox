@@ -1,7 +1,7 @@
 from argparse import ArgumentParser
 from typing import Iterator, List, Tuple
 
-import pytorch_lightning as pl
+import lightning as L
 import torch
 from torch.utils.data import DataLoader
 from torch.utils.data.datapipes.datapipe import IterDataPipe
@@ -86,5 +86,5 @@ model = Transformer(
     feed_forward_hidden_size=1024,
 )
 
-trainer = pl.Trainer(min_epochs=20)
+trainer = L.Trainer(min_epochs=20)
 trainer.fit(model, train_dataloader, valid_dataloader)

@@ -1,4 +1,4 @@
-import pytorch_lightning as pl
+import lightning as L
 import torch
 import torch.nn as nn
 from torchtext.vocab import Vocab
@@ -8,7 +8,7 @@ from .layers.embedding import Embedding
 from .layers.encoder import TransformerEncoder
 
 
-class Transformer(pl.LightningModule):
+class Transformer(L.LightningModule):
     def __init__(
         self,
         source_vocab: Vocab,

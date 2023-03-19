@@ -2,9 +2,9 @@ autopep8
 arcade
 black
 librosa
+lightning
 numpy
 pyglet
-pytorch-lightning
 scipy
 torch
 torchtext
