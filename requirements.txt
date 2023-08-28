@@ -11,3 +11,5 @@ torchtext
 torchvision
 tqdm
 typing_extensions
+jax
+matplotlib

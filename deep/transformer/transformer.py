@@ -101,7 +101,7 @@ class Transformer(L.LightningModule):
     def configure_optimizers(self) -> torch.optim.Optimizer:
         return torch.optim.Adam(self.parameters(), lr=self.lr)
 
-    def training_step(self, batch: torch.Tensor, i: int) -> torch.Tensor:
+    def training_step(self, batch: torch.Tensor, _) -> torch.Tensor:
         source, target = batch
         source = source.to(self.device)
         target = target.to(self.device)
@@ -110,7 +110,7 @@ class Transformer(L.LightningModule):
 
         return self.loss(logits.permute(0, 2, 1), target[:, 1:])
 
-    def validation_step(self, batch: torch.Tensor, i: int) -> torch.Tensor:
+    def validation_step(self, batch: torch.Tensor, _) -> torch.Tensor:
         source, target = batch
         source = source.to(self.device)
         target = target.to(self.device)
